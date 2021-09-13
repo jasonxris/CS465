@@ -1,0 +1,145 @@
+import unittest
+from main import AES
+
+
+class TestStringMethods(unittest.TestCase):
+
+    def test_ffAdd(self):
+        self.assertEqual(AES().ffAdd(0x57, 0x83), 0xd4)
+
+    def test_xTime(self):
+        self.assertEqual(AES().xtime(0x57), 0xae)
+        self.assertEqual(AES().xtime(0xae), 0x47)
+        self.assertEqual(AES().xtime(0x47), 0x8e)
+        self.assertEqual(AES().xtime(0x8e), 0x07)
+
+    def test_ffMultiply(self):
+        self.assertEqual(AES().ffMultiply(0x57, 0x13), 0xfe)
+        self.assertEqual(AES().ffMultiply(0x22, 0x0e), 0xc7)
+        self.assertEqual(AES().ffMultiply(0x70, 0x27), 0xc9)
+
+    def test_mixColumns(self):
+        ogState1 = [[0xd4, 0xe0, 0xb8, 0x1e],
+                    [0xbf, 0xb4, 0x41, 0x27],
+                    [0x5d, 0x52, 0x11, 0x98],
+                    [0x30, 0xae, 0xf1, 0xe5]]
+
+        ogState2 = [[0x87, 0xf2, 0x4d, 0x97],
+                    [0x6e, 0x4c, 0x90, 0xec],
+                    [0x46, 0xe7, 0x4a, 0xc3],
+                    [0xa6, 0x8c, 0xd8, 0x95]]
+
+        og1Result = [[0x04, 0xe0, 0x48, 0x28],
+                     [0x66, 0xcb, 0xf8, 0x06],
+                     [0x81, 0x19, 0xd3, 0x26],
+                     [0xe5, 0x9a, 0x7a, 0x4c]]
+
+        og2Result = [[0x47, 0x40, 0xa3, 0x4c],
+                     [0x37, 0xd4, 0x70, 0x9f],
+                     [0x94, 0xe4, 0x3a, 0x42],
+                     [0xed, 0xa5, 0xa6, 0xbc]]
+        self.assertEqual(AES().mixColumns(ogState1), og1Result)
+        self.assertEqual(AES().mixColumns(ogState2), og2Result)
+
+    def test_shiftRow(self):
+        ogState1 = [[0xd4, 0xe0, 0xb8, 0x1e],
+                    [0x27, 0xbf, 0xb4, 0x41],
+                    [0x11, 0x98, 0x5d, 0x52],
+                    [0xae, 0xf1, 0xe5, 0x30]]
+
+        og1Result = [[0xd4, 0xe0, 0xb8, 0x1e],
+                     [0xbf, 0xb4, 0x41, 0x27],
+                     [0x5d, 0x52, 0x11, 0x98],
+                     [0x30, 0xae, 0xf1, 0xe5]]
+        self.assertEqual(og1Result, AES().shiftRows(ogState1))
+
+    def test_subByte(self):
+        ogState1 = [[0x19, 0xa0, 0x9a, 0xe9],
+                    [0x3d, 0xf4, 0xc6, 0xf8],
+                    [0xe3, 0xe2, 0x8d, 0x48],
+                    [0xbe, 0x2b, 0x2a, 0x08]]
+
+        og1Result = [[0xd4, 0xe0, 0xb8, 0x1e],
+                     [0x27, 0xbf, 0xb4, 0x41],
+                     [0x11, 0x98, 0x5d, 0x52],
+                     [0xae, 0xf1, 0xe5, 0x30]]
+
+    def test_subWord(self):
+        ogWord1 = 0x00102030
+        ogWord2 = 0x40506070
+        ogWord3 = 0x8090a0b0
+        ogWord4 = 0xc0d0e0f0
+        wordResult1 = 0x63cab704
+        wordResult2 = 0x0953d051
+        wordResult3 = 0xcd60e0e7
+        wordResult4 = 0xba70e18c
+        self.assertEqual(AES().subWord(ogWord1), wordResult1)
+        self.assertEqual(AES().subWord(ogWord2), wordResult2)
+        self.assertEqual(AES().subWord(ogWord3), wordResult3)
+        self.assertEqual(AES().subWord(ogWord4), wordResult4)
+
+    def test_rotWord(self):
+        ogWord1 = 0x09cf4f3c
+        ogWord2 = 0x2a6c7605
+        wordResult1 = 0xcf4f3c09
+        wordResult2 = 0x6c76052a
+        self.assertEqual(AES().rotWord(ogWord1), wordResult1)
+        self.assertEqual(AES().rotWord(ogWord2), wordResult2)
+
+    def test_Key(self):
+        key = 0x2b7e151628aed2a6abf7158809cf4f3c
+        expandedKey = [0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
+                       0xa0fafe17, 0x88542cb1, 0x23a33939, 0x2a6c7605,
+                       0xf2c295f2, 0x7a96b943, 0x5935807a, 0x7359f67f,
+                       0x3d80477d, 0x4716fe3e, 0x1e237e44, 0x6d7a883b,
+                       0xef44a541, 0xa8525b7f, 0xb671253b, 0xdb0bad00,
+                       0xd4d1c6f8, 0x7c839d87, 0xcaf2b8bc, 0x11f915bc,
+                       0x6d88a37a, 0x110b3efd, 0xdbf98641, 0xca0093fd,
+                       0x4e54f70e, 0x5f5fc9f3, 0x84a64fb2, 0x4ea6dc4f,
+                       0xead27321, 0xb58dbad2, 0x312bf560, 0x7f8d292f,
+                       0xac7766f3, 0x19fadc21, 0x28d12941, 0x575c006e,
+                       0xd014f9a8, 0xc9ee2589, 0xe13f0cc8, 0xb6630ca6]
+        self.assertEqual(AES().keyExpansion(key), expandedKey)
+
+    def test_cipher(self):
+        ogState = [[0x19, 0xa0, 0x9a, 0xe9],
+                   [0x3d, 0xf4, 0xc6, 0xf8],
+                   [0xe3, 0xe2, 0x8d, 0x48],
+                   [0xbe, 0x2b, 0x2a, 0x08]]
+
+        sub = [[0xd4, 0xe0, 0xb8, 0x1e],
+               [0x27, 0xbf, 0xb4, 0x41],
+               [0x11, 0x98, 0x5d, 0x52],
+               [0xae, 0xf1, 0xe5, 0x30]]
+
+        shift = [[0xd4, 0xe0, 0xb8, 0x1e],
+                 [0xbf, 0xb4, 0x41, 0x27],
+                 [0x5d, 0x52, 0x11, 0x98],
+                 [0x30, 0xae, 0xf1, 0xe5]]
+
+        mix = [[0x04, 0xe0, 0x48, 0x28],
+               [0x66, 0xcb, 0xf8, 0x06],
+               [0x81, 0x19, 0xd3, 0x26],
+               [0xe5, 0x9a, 0x7a, 0x4c]]
+
+        roundResult = [[0xa4, 0x68, 0x6b, 0x02],
+                       [0x9c, 0x9f, 0x5b, 0x6a],
+                       [0x7f, 0x35, 0xea, 0x50],
+                       [0xf2, 0x2b, 0x43, 0x49]]
+
+        currentState = AES().subBytes(ogState)
+        self.assertEqual(sub, currentState)
+
+        currentState = AES().shiftRows(currentState)
+        self.assertEqual(shift, currentState)
+
+        currentState = AES().mixColumns(currentState)
+        self.assertEqual(mix, currentState)
+
+        key = 0x2b7e151628aed2a6abf7158809cf4f3c
+        keyExpansion = AES().keyExpansion(key)
+        currentState = AES().addRoundKey(keyExpansion,currentState, 1)
+        self.assertEqual(roundResult, currentState)
+
+if __name__ == '__main__':
+    unittest.main()
