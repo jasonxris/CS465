@@ -53,57 +53,61 @@ class AES:
         return result
 
     def keyExpansion(self, key):
-        # Key is retrieved from the objects state ( key )
-        result = []
-        print(self.key)
-        test = np.array(self.key)
-        print("test: ", test)
-        for i in range(self.Nk):
-            # result.append(test[i*4:(i*4 +4)])
-            result.append((key >> (32 * (self.Nk - i - 1))) & 0xFFFFFFFF)
-        # for i in result:
-        #     print(hex(i))
-        for i in range(self.Nk, 4 * (self.Nr + 1)):
-            temp = result[i - 1]
-            if (i % self.Nk) == 0:
-                temp = self.rotWord(temp)
-                temp = self.subWord(temp)
-                rcon = RconArray[i // self.Nk]
-                temp = temp ^ rcon
-            elif (self.Nk > 6) and ((i % self.Nk) == 4):
-                temp = self.subWord(temp)
-            result.append(result[i - self.Nk] ^ temp)
+        # result should just be the key separated into words
+        result = self.hexToWordArray(key, self.Nk)
+        numberOfLoops = ((self.Nr +1)*4)
+        numberOfWordsInKey = self.Nk
 
+        #  first 4 words are already created, start there
+        for i in range(4,numberOfLoops):
+            # Get the last created word
+            lastWord = result[-1]
+            # If this is a new roundKey then perform the following operations
+            if (i % numberOfWordsInKey) == 0:
+                #  Cylic permutation
+                lastWord = self.rotWord(lastWord)
+                #  apply S-box to wrod
+                lastWord = self.subWord(lastWord)
+                rcon = RconArray[i // numberOfWordsInKey]
+                lastWord = lastWord ^ rcon
+            elif ((i % numberOfWordsInKey) == 4) and (numberOfWordsInKey > 6):
+                lastWord = self.subWord(lastWord)
+            result.append(result[i - numberOfWordsInKey] ^ lastWord)
         return result
 
-    def wordToArray(self, word):
-        wordArray = [(word & 0xFF000000) >> 24, (word & 0xFF0000) >> 16, (word & 0xFF00) >> 8, word & 0xFF]
-        return wordArray
+    def hexToWordArray(self, hexValue, numberOfWords):
+        result = []
+        stringHex = str(hex(hexValue))[2:]
+        for i in range(numberOfWords):
+            hexString = stringHex[(i * 8):(i * 8) + 8]
+            result.append(int(hexString, 16))
+        return result
 
     def subWord(self, word):
-        wordArray = self.wordToArray(word)
+        wordArray = [(word & 0xFF000000) >> 24, (word & 0xFF0000) >> 16, (word & 0xFF00) >> 8, word & 0xFF]
         b = 0
         for byte in wordArray:
-            b = (b << 8) + self.subByte(byte)
+            x = (byte & 0xF0) >> 4
+            y = byte & 0xF
+            b = (b << 8) + Sbox[x][y]
         return b
 
-    def subByte(self, word):
-        x = (word & 0xF0) >> 4
-        y = word & 0xF
-        return Sbox[x][y]
-
     def rotWord(self, word):
-        # Performs a cyclic permutation on its input word
-        newWord = (word << 8) & 0xFFFFFFFF
-        newWord = newWord | ((word >> 24) & 0xFF)
-        return newWord
+        # Shfit word 8 bits to left and remove extra values
+        result = (word << 8) & 0xFFFFFFFF
+        # add a1 to the end
+        a0 = ((word >> 24) & 0xFF)
+        result = result | a0
+        return result
 
     def subBytes(self, state):
         # substitutes each byte in the state with the value in S-box
         result = [[], [], [], []]
         for x in range(4):
             for y in range(4):
-                result[x].append(self.subByte(state[x][y]))
+                z = (state[x][y] & 0xF0) >> 4
+                w = state[x][y] & 0xF
+                result[x].append(Sbox[z][w])
         return result
 
     def shiftRows(self, state):
@@ -182,9 +186,6 @@ class AES:
 
 
 if __name__ == '__main__':
-    # bit_256 = bytearray.fromhex("29c11ac6ade7a2826a958bad3bee007f1c33daa1dcafcaa0881a9b1f150ebe69")
-    # bit_192 = bytearray.fromhex("29c11ac6ade7a2826a958bad3bee007f1c33daa1dcafcaa0")
-    # bit_128 = bytearray.fromhex("29c11ac6ade7a2826a958bad3bee007f")
     bit_128 = 0x2b7e151628aed2a6abf7158809cf4f3c
 
     bit_128_AES = AES(bit_128)
