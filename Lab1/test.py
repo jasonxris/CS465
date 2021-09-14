@@ -16,6 +16,16 @@ class TestStringMethods(unittest.TestCase):
                 result[j][i] = int(desiredHexValue,16)
         return result
 
+    def arrayToHex(self,hexArray):
+        result = ""
+        for i in range(4):
+            for j in range(4):
+                hexString = str(hex(hexArray[j][i]))[2:]
+                if len(hexString) < 2 :
+                    hexString = "0" + hexString
+                result += hexString
+        return result
+
     def test_ffAdd(self):
         self.assertEqual(AES().ffAddition(0x57, 0x83), 0xd4)
 
@@ -64,17 +74,6 @@ class TestStringMethods(unittest.TestCase):
                      [0x5d, 0x52, 0x11, 0x98],
                      [0x30, 0xae, 0xf1, 0xe5]]
         self.assertEqual(og1Result, AES().shiftRows(ogState1))
-
-    def test_subByte(self):
-        ogState1 = [[0x19, 0xa0, 0x9a, 0xe9],
-                    [0x3d, 0xf4, 0xc6, 0xf8],
-                    [0xe3, 0xe2, 0x8d, 0x48],
-                    [0xbe, 0x2b, 0x2a, 0x08]]
-
-        og1Result = [[0xd4, 0xe0, 0xb8, 0x1e],
-                     [0x27, 0xbf, 0xb4, 0x41],
-                     [0x11, 0x98, 0x5d, 0x52],
-                     [0xae, 0xf1, 0xe5, 0x30]]
 
     def test_subWord(self):
         ogWord1 = 0x00102030
@@ -154,8 +153,17 @@ class TestStringMethods(unittest.TestCase):
         currentState = AES().addRoundKey(keyExpansion,currentState, 1)
         self.assertEqual(roundResult, currentState)
 
+        plainText = '3243f6a8885a308d313198a2e0370734'
+        encryptedSolution = [0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,
+                      0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32]
+
+        encrypted = AES(key=key).cipher(plainText)
+        print(encrypted)
+        print(encryptedSolution)
+
     def test_cipher_128_2(self):
         key = '000102030405060708090a0b0c0d0e0f'
+        plainTextValue = '00112233445566778899aabbccddeeff'
 
         ogState = self.hexToArray("00102030405060708090a0b0c0d0e0f0")
         sub = self.hexToArray("63cab7040953d051cd60e0e7ba70e18c")
@@ -175,6 +183,10 @@ class TestStringMethods(unittest.TestCase):
         keyExpansion = AES().keyExpansion(key)
         currentState = AES().addRoundKey(keyExpansion,currentState,1)
         self.assertEqual(roundResult, currentState)
+
+        encryptedExpected = self.hexToArray("69c4e0d86a7b0430d8cdb78070b4c55a")
+        encryptedResult = AES(key=key).cipher(plainTextValue)
+        self.assertEqual(encryptedExpected, encryptedResult)
 
     def test_cipher_192(self):
         key = '000102030405060708090a0b0c0d0e0f1011121314151617'
@@ -219,7 +231,6 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(mix, currentState)
 
         keyExpansion = aes_256Bit.keyExpansion(key)
-        print(keyExpansion)
         currentState = aes_256Bit.addRoundKey(keyExpansion,currentState,1)
         self.assertEqual(roundResult, currentState)
 
