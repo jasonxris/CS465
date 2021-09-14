@@ -20,13 +20,13 @@ NrOptions = {
 
 
 class AES:
-    def __init__(self, key=1, Nk=4, Nr=10):
+    def __init__(self, key="", Nk=4, Nr=10):
         self.key = key
         self.state = []
         self.Nk = Nk
         self.Nr = Nr
 
-    def ffAdd(self, x, y):
+    def ffAddition(self, x, y):
         # Xor then remove any extra bits
         return (x ^ y) & 0xFF
 
@@ -55,11 +55,11 @@ class AES:
     def keyExpansion(self, key):
         # result should just be the key separated into words
         result = self.hexToWordArray(key, self.Nk)
-        numberOfLoops = ((self.Nr +1)*4)
+        numberOfLoops = ((self.Nr + 1) * 4)
         numberOfWordsInKey = self.Nk
 
         #  first 4 words are already created, start there
-        for i in range(4,numberOfLoops):
+        for i in range(numberOfWordsInKey, numberOfLoops):
             # Get the last created word
             lastWord = result[-1]
             # If this is a new roundKey then perform the following operations
@@ -75,11 +75,12 @@ class AES:
             result.append(result[i - numberOfWordsInKey] ^ lastWord)
         return result
 
-    def hexToWordArray(self, hexValue, numberOfWords):
+    def hexToWordArray(self, hexValueString, numberOfWords):
         result = []
-        stringHex = str(hex(hexValue))[2:]
+        if hexValueString[:2] == "0x":
+            hexValueString = str(hex(hexValueString))[2:]
         for i in range(numberOfWords):
-            hexString = stringHex[(i * 8):(i * 8) + 8]
+            hexString = hexValueString[(i * 8):(i * 8) + 8]
             result.append(int(hexString, 16))
         return result
 
@@ -113,42 +114,42 @@ class AES:
     def shiftRows(self, state):
         result = [[], [], [], []]
         for i in range(4):
-            result[i] = self.shift(state[i], i)
+            result[i] = state[i][i:] + state[i][:i]
         return result
-
-    def shift(self, l, n):
-        return l[n:] + l[:n]
 
     # FIX THISdwa
     def mixColumns(self, state):
         result = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-        for col in range(4):
-            result[0][col] = self.ffAdd(
-                self.ffAdd(self.ffAdd(self.ffMultiply(0x02, state[0][col]), self.ffMultiply(0x03, state[1][col])),
-                           state[2][col]), state[3][col])
-            result[1][col] = self.ffAdd(self.ffAdd(self.ffAdd(state[0][col], self.ffMultiply(0x02, state[1][col])),
-                                                   self.ffMultiply(0x03, state[2][col])), state[3][col])
-            result[2][col] = self.ffAdd(
-                self.ffAdd(self.ffAdd(state[0][col], state[1][col]), self.ffMultiply(0x02, state[2][col])),
-                self.ffMultiply(0x03, state[3][col]))
-            result[3][col] = self.ffAdd(
-                self.ffAdd(self.ffAdd(self.ffMultiply(0x03, state[0][col]), state[1][col]), state[2][col]),
-                self.ffMultiply(0x02, state[3][col]))
+        for i in range(4):
+            result[0][i] = self.ffAddition(
+                self.ffAddition(self.ffAddition(self.ffMultiply(0x02, state[0][i]), self.ffMultiply(0x03, state[1][i])),
+                                state[2][i]), state[3][i])
+            result[1][i] = self.ffAddition(
+                self.ffAddition(self.ffAddition(state[0][i], self.ffMultiply(0x02, state[1][i])),
+                                self.ffMultiply(0x03, state[2][i])), state[3][i])
+            result[2][i] = self.ffAddition(
+                self.ffAddition(self.ffAddition(state[0][i], state[1][i]), self.ffMultiply(0x02, state[2][i])),
+                self.ffMultiply(0x03, state[3][i]))
+            result[3][i] = self.ffAddition(
+                self.ffAddition(self.ffAddition(self.ffMultiply(0x03, state[0][i]), state[1][i]), state[2][i]),
+                self.ffMultiply(0x02, state[3][i]))
         return result
 
-    def addRoundKey(self, keyExpansion, state, round):
+    def addRoundKey(self, keyExpansion, state, currentRound):
         result = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-        key = keyExpansion[round * 4:(round * 4 + 4)]
+        key = keyExpansion[currentRound * 4:(currentRound * 4 + 4)]
         newKey = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        # get the correct key from the key expansion for this round
         for i in range(4):
             for j in range(4):
                 desiredHexValue = str(hex(key[i]))[(j * 2) + 2:(j * 2) + 4]
-                desiredHexValue = "0x" + desiredHexValue
-                newKey[j][i] = int(desiredHexValue, 16)
-
+                if desiredHexValue != "":
+                    desiredHexValue = "0x" + desiredHexValue
+                    newKey[j][i] = int(desiredHexValue, 16)
+        # xor each value from the state and the newKey together
         for x in range(4):
             for y in range(4):
-                result[x][y] = self.ffAdd(state[x][y], newKey[x][y])
+                result[x][y] = self.ffAddition(state[x][y], newKey[x][y])
         return result
 
     def expansionToArray(self, expansionRaw):

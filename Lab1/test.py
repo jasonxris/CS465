@@ -2,10 +2,22 @@ import unittest
 from main import AES
 
 
+
 class TestStringMethods(unittest.TestCase):
 
+    def hexToArray(self,hexValue):
+        result = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        counter = 0
+        for i in range(4):
+            for j in range(4):
+                desiredHexValue = hexValue[counter*2:counter*2+2]
+                desiredHexValue = "0x" + desiredHexValue
+                counter += 1
+                result[j][i] = int(desiredHexValue,16)
+        return result
+
     def test_ffAdd(self):
-        self.assertEqual(AES().ffAdd(0x57, 0x83), 0xd4)
+        self.assertEqual(AES().ffAddition(0x57, 0x83), 0xd4)
 
     def test_xTime(self):
         self.assertEqual(AES().xtime(0x57), 0xae)
@@ -87,7 +99,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(AES().rotWord(ogWord2), wordResult2)
 
     def test_Key(self):
-        key = 0x2b7e151628aed2a6abf7158809cf4f3c
+        key = '2b7e151628aed2a6abf7158809cf4f3c'
         expandedKey = [0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
                        0xa0fafe17, 0x88542cb1, 0x23a33939, 0x2a6c7605,
                        0xf2c295f2, 0x7a96b943, 0x5935807a, 0x7359f67f,
@@ -101,7 +113,8 @@ class TestStringMethods(unittest.TestCase):
                        0xd014f9a8, 0xc9ee2589, 0xe13f0cc8, 0xb6630ca6]
         self.assertEqual(AES().keyExpansion(key), expandedKey)
 
-    def test_cipher(self):
+    def test_cipher_128(self):
+
         ogState = [[0x19, 0xa0, 0x9a, 0xe9],
                    [0x3d, 0xf4, 0xc6, 0xf8],
                    [0xe3, 0xe2, 0x8d, 0x48],
@@ -136,9 +149,78 @@ class TestStringMethods(unittest.TestCase):
         currentState = AES().mixColumns(currentState)
         self.assertEqual(mix, currentState)
 
-        key = 0x2b7e151628aed2a6abf7158809cf4f3c
+        key = '2b7e151628aed2a6abf7158809cf4f3c'
         keyExpansion = AES().keyExpansion(key)
         currentState = AES().addRoundKey(keyExpansion,currentState, 1)
+        self.assertEqual(roundResult, currentState)
+
+    def test_cipher_128_2(self):
+        key = '000102030405060708090a0b0c0d0e0f'
+
+        ogState = self.hexToArray("00102030405060708090a0b0c0d0e0f0")
+        sub = self.hexToArray("63cab7040953d051cd60e0e7ba70e18c")
+        shift = self.hexToArray("6353e08c0960e104cd70b751bacad0e7")
+        mix = self.hexToArray("5f72641557f5bc92f7be3b291db9f91a")
+        roundResult = self.hexToArray("89d810e8855ace682d1843d8cb128fe4")
+
+        currentState = AES().subBytes(ogState)
+        self.assertEqual(sub, currentState)
+
+        currentState = AES().shiftRows(currentState)
+        self.assertEqual(shift, currentState)
+
+        currentState = AES().mixColumns(currentState)
+        self.assertEqual(mix, currentState)
+
+        keyExpansion = AES().keyExpansion(key)
+        currentState = AES().addRoundKey(keyExpansion,currentState,1)
+        self.assertEqual(roundResult, currentState)
+
+    def test_cipher_192(self):
+        key = '000102030405060708090a0b0c0d0e0f1011121314151617'
+        aes_192Bit = AES(key,6,12)
+
+        ogState = self.hexToArray("00102030405060708090a0b0c0d0e0f0")
+        sub = self.hexToArray("63cab7040953d051cd60e0e7ba70e18c")
+        shift = self.hexToArray("6353e08c0960e104cd70b751bacad0e7")
+        mix = self.hexToArray("5f72641557f5bc92f7be3b291db9f91a")
+        roundResult = self.hexToArray("4f63760643e0aa85aff8c9d041fa0de4")
+
+        currentState = aes_192Bit.subBytes(ogState)
+        self.assertEqual(sub, currentState)
+
+        currentState = aes_192Bit.shiftRows(currentState)
+        self.assertEqual(shift, currentState)
+
+        currentState = aes_192Bit.mixColumns(currentState)
+        self.assertEqual(mix, currentState)
+
+        keyExpansion = aes_192Bit.keyExpansion(key)
+        currentState = aes_192Bit.addRoundKey(keyExpansion,currentState,1)
+        self.assertEqual(roundResult, currentState)
+
+    def test_cipher_256(self):
+        key = '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
+        aes_256Bit = AES(key,8,14)
+
+        ogState = self.hexToArray("00102030405060708090a0b0c0d0e0f0")
+        sub = self.hexToArray("63cab7040953d051cd60e0e7ba70e18c")
+        shift = self.hexToArray("6353e08c0960e104cd70b751bacad0e7")
+        mix = self.hexToArray("5f72641557f5bc92f7be3b291db9f91a")
+        roundResult = self.hexToArray("4f63760643e0aa85efa7213201a4e705")
+
+        currentState = aes_256Bit.subBytes(ogState)
+        self.assertEqual(sub, currentState)
+
+        currentState = aes_256Bit.shiftRows(currentState)
+        self.assertEqual(shift, currentState)
+
+        currentState = aes_256Bit.mixColumns(currentState)
+        self.assertEqual(mix, currentState)
+
+        keyExpansion = aes_256Bit.keyExpansion(key)
+        print(keyExpansion)
+        currentState = aes_256Bit.addRoundKey(keyExpansion,currentState,1)
         self.assertEqual(roundResult, currentState)
 
 if __name__ == '__main__':
