@@ -190,6 +190,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_cipher_192(self):
         key = '000102030405060708090a0b0c0d0e0f1011121314151617'
+        plainText = '00112233445566778899aabbccddeeff'
         aes_192Bit = AES(key,6,12)
 
         ogState = self.hexToArray("00102030405060708090a0b0c0d0e0f0")
@@ -210,6 +211,10 @@ class TestStringMethods(unittest.TestCase):
         keyExpansion = aes_192Bit.keyExpansion(key)
         currentState = aes_192Bit.addRoundKey(keyExpansion,currentState,1)
         self.assertEqual(roundResult, currentState)
+
+        encryptedExpected = self.hexToArray("dda97ca4864cdfe06eaf70a0ec0d7191")
+        encryptedResult = aes_192Bit.cipher(plainText)
+        self.assertEqual(encryptedExpected, encryptedResult)
 
     def test_cipher_256(self):
         key = '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
@@ -233,6 +238,11 @@ class TestStringMethods(unittest.TestCase):
         keyExpansion = aes_256Bit.keyExpansion(key)
         currentState = aes_256Bit.addRoundKey(keyExpansion,currentState,1)
         self.assertEqual(roundResult, currentState)
+
+        plainText = '00112233445566778899aabbccddeeff'
+        encryptedExpected = self.hexToArray("8ea2b7ca516745bfeafc49904b496089")
+        encryptedResult = aes_256Bit.cipher(plainText)
+        self.assertEqual(encryptedExpected, encryptedResult)
 
 if __name__ == '__main__':
     unittest.main()
