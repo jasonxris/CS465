@@ -1,10 +1,4 @@
 from constants import RconArray, Sbox, InvSbox
-import numpy as np
-
-# Cipher key K is 128, 192, or 256 bits
-# 128 bits, key length = 4, block = 4, rounds = 10
-# 192 bits, key length = 6, block = 4, rounds = 12
-# 256 bits, key length = 8, block = 4, rounds = 14
 
 NkOptions = {
     16: 4,
@@ -180,54 +174,62 @@ class AES:
         # inverse of mixColumns
         return None
 
-    def hexToArray(self,hexValue):
+    def hexToArray(self, hexValue):
         result = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         counter = 0
         for i in range(4):
             for j in range(4):
-                desiredHexValue = hexValue[counter*2:counter*2+2]
+                desiredHexValue = hexValue[counter * 2:counter * 2 + 2]
                 desiredHexValue = "0x" + desiredHexValue
                 counter += 1
-                result[j][i] = int(desiredHexValue,16)
+                result[j][i] = int(desiredHexValue, 16)
         return result
 
-    def arrayToHex(self,hexArray):
+    def arrayToHex(self, hexArray):
         result = ""
         for i in range(4):
             for j in range(4):
                 hexString = str(hex(hexArray[j][i]))[2:]
-                if len(hexString) < 2 :
+                if len(hexString) < 2:
                     hexString = "0" + hexString
                 result += hexString
         return result
 
     def cipher(self, plainText):
-        result = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-        w = self.keyExpansion(self.key)
+        # 1st round
+        expansions = self.keyExpansion(self.key)
         state = self.hexToArray(plainText)
-        print('round[ 0 ].input    ' + plainText)
-        print('round[ 0 ].k_sch    ' + self.key)
-        state = self.addRoundKey(w, state, 0)
+        print('round[ 0 ].input    ', plainText)
+        print('round[ 0 ].k_sch    ', self.key)
+        state = self.addRoundKey(expansions, state, 0)
+
+        # Middle rounds
         for round in range(1, self.Nr):
-            print('round[', round, '].start    ' + self.arrayToHex(state))
+            print('round[', round, '].start    ', self.arrayToHex(state))
+
             state = self.subBytes(state)
-            print('round[', round, '].s_box    ' + self.arrayToHex(state))
+            print('round[', round, '].s_box    ', self.arrayToHex(state))
 
             state = self.shiftRows(state)
-            print('round[', round, '].s_row    ' + self.arrayToHex(state))
+            print('round[', round, '].s_row    ', self.arrayToHex(state))
+
             state = self.mixColumns(state)
-            print('round[', round, '].m_col    ' + self.arrayToHex(state))
-            print('round[', round, '].k_sch    ' + self.arrayToHex(self.keyForRound(w, round)))
-            state = self.addRoundKey(w, state, round)
+            print('round[', round, '].m_col    ', self.arrayToHex(state))
+
+            state = self.addRoundKey(expansions, state, round)
+            print('round[', round, '].k_sch    ', self.arrayToHex(self.keyForRound(expansions, round)))
+
         # Last round
-        round = self.Nr
         state = self.subBytes(state)
-        print('round[', round,'].s_box    ' + self.arrayToHex(state))
+        print('round[', self.Nr, '].s_box    ' + self.arrayToHex(state))
+
         state = self.shiftRows(state)
-        print('round[', round,'].s_row    ' + self.arrayToHex(state))
-        state = self.addRoundKey(w, state, round)
-        print('round[', round, '].k_sch    ' + self.arrayToHex(self.keyForRound(w, round)))
-        print('round[', round,'].output    ' + self.arrayToHex(state))
+        print('round[', self.Nr, '].s_row    ' + self.arrayToHex(state))
+
+        state = self.addRoundKey(expansions, state, self.Nr)
+        print('round[', self.Nr, '].k_sch    ' + self.arrayToHex(self.keyForRound(expansions, self.Nr)))
+
+        print('round[', self.Nr, '].output    ' + self.arrayToHex(state))
         return state
 
     def invCipher(self, encryptedMessage):
@@ -236,21 +238,20 @@ class AES:
 
 
 if __name__ == '__main__':
+    key = '2b7e151628aed2a6abf7158809cf4f3c'
+    plainText = '3243f6a8885a308d313198a2e0370734'
+    encryptedText = '63233344ca29d4e2903d0c86f3a81e1a'
+    nk = 4
+    nr = 10
+    aes = AES(key, nk, nr)
 
-    bit_128 = '2b7e151628aed2a6abf7158809cf4f3c'
-    bit_128_AES = AES(bit_128,Nk=4,Nr=10)
-    # MessageToDecrypt = bytearray.fromhex("63233344ca29d4e2903d0c86f3a81e1a")
-    # MessageToEncrypt = bytearray.fromhex("45d346ee7e91ba31666fe111c6ace1f0")
-    messageToDecrypt = '63233344ca29d4e2903d0c86f3a81e1a'
-    messageToEncrypt = '3243f6a8885a308d313198a2e0370734'
-    # plainTextMessage = bit_128_AES.invCipher(MessageToDecrypt)
-    print("PLAINTEXT: ", messageToEncrypt)
-    print("KEY: ", bit_128, "\n")
+    print("PLAINTEXT: ", plainText)
+    print("KEY: ", key, "\n")
     print("CIPHER (ENCRPT)")
 
-    bit_128_AES.cipher(messageToEncrypt)
+    aes.cipher(plainText)
 
     # Rounds output
 
-    print("INVERSE CIPHER ")
+    print("\nINVERSE CIPHER ")
     # Rounds output

@@ -1,5 +1,17 @@
 1. How to Compile
+- Open in python
+- Navigate to the main method
+- Change the following
+* plain text value
+* key
+* Nr
+* Nk
+* encryptedMessage
+
+Run
 
 2. State me about resources used
+I only used resoursed listed in the lab for AES Specifics
 
 3. Statement about text cases in Appendix X i passed or failed
+All cases pass
