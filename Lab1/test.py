@@ -36,9 +36,9 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(AES().xtime(0x8e), 0x07)
 
     def test_ffMultiply(self):
-        self.assertEqual(AES().ffMultiply(0x57, 0x13), 0xfe)
-        self.assertEqual(AES().ffMultiply(0x22, 0x0e), 0xc7)
-        self.assertEqual(AES().ffMultiply(0x70, 0x27), 0xc9)
+        self.assertEqual(AES().ffMultiplication(0x57, 0x13), 0xfe)
+        self.assertEqual(AES().ffMultiplication(0x22, 0x0e), 0xc7)
+        self.assertEqual(AES().ffMultiplication(0x70, 0x27), 0xc9)
 
     def test_mixColumns(self):
         ogState1 = [[0xd4, 0xe0, 0xb8, 0x1e],
@@ -62,6 +62,8 @@ class TestStringMethods(unittest.TestCase):
                      [0xed, 0xa5, 0xa6, 0xbc]]
         self.assertEqual(AES().mixColumns(ogState1), og1Result)
         self.assertEqual(AES().mixColumns(ogState2), og2Result)
+        self.assertEqual(AES().invMixColumns(og2Result), ogState2)
+        self.assertEqual(AES().invMixColumns(og1Result), ogState1)
 
     def test_shiftRow(self):
         ogState1 = [[0xd4, 0xe0, 0xb8, 0x1e],
@@ -74,6 +76,7 @@ class TestStringMethods(unittest.TestCase):
                      [0x5d, 0x52, 0x11, 0x98],
                      [0x30, 0xae, 0xf1, 0xe5]]
         self.assertEqual(og1Result, AES().shiftRows(ogState1))
+        self.assertEqual(ogState1, AES().invShiftRows(og1Result))
 
     def test_subWord(self):
         ogWord1 = 0x00102030
@@ -88,6 +91,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(AES().subWord(ogWord2), wordResult2)
         self.assertEqual(AES().subWord(ogWord3), wordResult3)
         self.assertEqual(AES().subWord(ogWord4), wordResult4)
+
 
     def test_rotWord(self):
         ogWord1 = 0x09cf4f3c
@@ -154,12 +158,15 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(roundResult, currentState)
 
         plainText = '3243f6a8885a308d313198a2e0370734'
-        encryptedSolution = [0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,
-                      0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32]
-
+        encryptedSolution = '3925841d02dc09fbdc118597196a0b32'
         encrypted = AES(key=key).cipher(plainText)
-        print(encrypted)
-        print(encryptedSolution)
+        self.assertEqual(encryptedSolution, self.arrayToHex(encrypted))
+
+        decryptedSolution = plainText
+        encryptedMessage = self.arrayToHex(encrypted)
+        decrypted = AES(key=key).invCipher(encryptedMessage)
+        self.assertEqual(decryptedSolution, self.arrayToHex(decrypted))
+
 
     def test_cipher_128_2(self):
         key = '000102030405060708090a0b0c0d0e0f'
@@ -187,6 +194,11 @@ class TestStringMethods(unittest.TestCase):
         encryptedExpected = self.hexToArray("69c4e0d86a7b0430d8cdb78070b4c55a")
         encryptedResult = AES(key=key).cipher(plainTextValue)
         self.assertEqual(encryptedExpected, encryptedResult)
+
+        decryptedSolution = plainTextValue
+        encryptedMessage = self.arrayToHex(encryptedResult)
+        decrypted = AES(key=key).invCipher(encryptedMessage)
+        self.assertEqual(decryptedSolution, self.arrayToHex(decrypted))
 
     def test_cipher_192(self):
         key = '000102030405060708090a0b0c0d0e0f1011121314151617'
@@ -216,6 +228,11 @@ class TestStringMethods(unittest.TestCase):
         encryptedResult = aes_192Bit.cipher(plainText)
         self.assertEqual(encryptedExpected, encryptedResult)
 
+        decryptedSolution = plainText
+        encryptedMessage = self.arrayToHex(encryptedResult)
+        decrypted = aes_192Bit.invCipher(encryptedMessage)
+        self.assertEqual(decryptedSolution, self.arrayToHex(decrypted))
+
     def test_cipher_256(self):
         key = '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
         aes_256Bit = AES(key,8,14)
@@ -243,6 +260,11 @@ class TestStringMethods(unittest.TestCase):
         encryptedExpected = self.hexToArray("8ea2b7ca516745bfeafc49904b496089")
         encryptedResult = aes_256Bit.cipher(plainText)
         self.assertEqual(encryptedExpected, encryptedResult)
+
+        decryptedSolution = plainText
+        encryptedMessage = self.arrayToHex(encryptedResult)
+        decrypted = aes_256Bit.invCipher(encryptedMessage)
+        self.assertEqual(decryptedSolution, self.arrayToHex(decrypted))
 
 if __name__ == '__main__':
     unittest.main()
