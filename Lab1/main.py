@@ -300,25 +300,28 @@ class AES:
 
 
 if __name__ == '__main__':
+
     key = 'f8566895c7402569dd55eb5bb304d591e48186fa31cfa1cc0831e4bccc69faa5'
     plainText = 'c8a8eb0963a7e4f9e8fec8a14c21a4ce'
     encryptedText = '529952222afd05579f09ec1ff9ab98e9'
     nk = 8
     nr = 14
     aes = AES(key, nk, nr)
+    print(aes.ffAddition(0x57,0x13))
+    print(aes.ffMultiplication(0x57,0x13))
 
-    print("PLAINTEXT: ", plainText)
-    print("KEY: ", key, "\n")
-    print("CIPHER (ENCRPT)")
+    # print("PLAINTEXT: ", plainText)
+    # print("KEY: ", key, "\n")
+    # print("CIPHER (ENCRPT)")
 
-    encrypted = aes.cipher(plainText)
+    # encrypted = aes.cipher(plainText)
 
-    # Rounds output
+    # # Rounds output
 
-    print("\nINVERSE CIPHER \n")
+    # print("\nINVERSE CIPHER \n")
 
-    decrypted = aes.invCipher(encryptedText)
-    # Rounds output
+    # decrypted = aes.invCipher(encryptedText)
+    # # Rounds output
 
-    print("encrypted ", AES().arrayToHex(encrypted))
-    print("decrypted ", AES().arrayToHex(decrypted))
+    # print("encrypted ", AES().arrayToHex(encrypted))
+    # print("decrypted ", AES().arrayToHex(decrypted))

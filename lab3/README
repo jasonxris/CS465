@@ -1,0 +1,5 @@
+Edit the following variables then run with python
+hexMessageArray
+hexDigestForMessage
+messageToAdd
+The new mac and generated message will print in terminal
